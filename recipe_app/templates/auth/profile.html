@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Mon profil — L'Atelier{% endblock %}
+{% block content %}
+<section class="page-intro"><span class="eyebrow"><span class="eyebrow-line"></span> MON COIN DE TABLE</span><h1>Bonjour,<br><em>{{ current_user.username }}.</em></h1><p>Votre petit espace à vous, au milieu de cette grande cuisine.</p></section>
+<section class="profile-panel"><div class="profile-current">{% if current_user.avatar_filename %}<img class="avatar avatar-large" src="{{ url_for('auth.avatar', filename=current_user.avatar_filename) }}" alt="Avatar de {{ current_user.username }}">{% else %}<span class="avatar avatar-large avatar-placeholder">{{ current_user.username[:1]|upper }}</span>{% endif %}<div><h2>{{ current_user.username }}</h2><p>{{ current_user.email }}</p><span class="role-badge">{{ 'Administrateur' if current_user.role == 'admin' else 'Membre de l’Atelier' }}</span></div></div>
+<form action="{{ url_for('auth.profile') }}" method="post" enctype="multipart/form-data" class="avatar-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label for="avatar">Changer de photo</label><p>JPEG, PNG ou WebP · 4 Mo maximum</p><input id="avatar" type="file" name="avatar" accept="image/jpeg,image/png,image/webp" required><button class="button button-dark" type="submit">Enregistrer ma photo <span>↗</span></button></form>
+<div class="profile-actions"><a class="underlink" href="{{ url_for('main.index') }}">← Retour aux recettes</a><form action="{{ url_for('auth.logout') }}" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="text-button" type="submit">Me déconnecter</button></form></div></section>
+{% endblock %}

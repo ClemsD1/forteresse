@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Connexion — L'Atelier{% endblock %}
+{% block content %}
+<section class="auth-layout"><div class="auth-art"><span class="eyebrow">LA TABLE EST MISE</span><div class="auth-art-mark">✳</div><h2>On garde<br>une place<br><em>pour vous.</em></h2><p>Retrouvez votre carnet de recettes et les personnes avec qui vous aimez cuisiner.</p><span class="auth-art-foot">À TABLE, LES AMIS. &nbsp; — L'ATELIER</span></div>
+<div class="auth-form-wrap"><span class="eyebrow"><span class="eyebrow-line"></span> HEUREUX DE VOUS REVOIR</span><h1>Reprenons<br>la <em>conversation.</em></h1><p class="form-intro">Connectez-vous pour retrouver les bonnes choses.</p><form method="post" class="form-stack">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="next" value="{{ next_url or '' }}">
+  <label>Adresse e-mail<input type="email" name="email" autocomplete="email" maxlength="254" required></label>
+  <label>Mot de passe<input type="password" name="password" maxlength="128" autocomplete="current-password" required></label>
+  <label class="checkbox-label"><input type="checkbox" name="remember"> Garder ma session ouverte</label>
+  <button class="button button-dark button-wide" type="submit">Se connecter <span>↗</span></button>
+</form><p class="auth-switch">Pas encore de compte ? <a href="{{ url_for('auth.register') }}">La table est ouverte.</a></p></div></section>
+{% endblock %}

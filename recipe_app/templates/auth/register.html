@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Rejoindre L'Atelier — L'Atelier{% endblock %}
+{% block content %}
+<section class="auth-layout"><div class="auth-art auth-art-green"><span class="eyebrow">LES BONNES CHOSES SE PARTAGENT</span><div class="auth-art-mark">✳</div><h2>Une grande<br>table. Plein<br><em>d'histoires.</em></h2><p>Votre carnet de recettes maison, votre coin de table, votre communauté.</p><span class="auth-art-foot">BIENVENUE CHEZ VOUS. &nbsp; — L'ATELIER</span></div>
+<div class="auth-form-wrap"><span class="eyebrow"><span class="eyebrow-line"></span> INSTALLEZ-VOUS</span><h1>La cuisine<br>nous <em>rassemble.</em></h1><p class="form-intro">Créez votre compte et partagez votre première recette.</p><form method="post" class="form-stack">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>Votre pseudo<input type="text" name="username" minlength="3" maxlength="40" pattern="[A-Za-z0-9_-]{3,40}" autocomplete="username" required><small>3 à 40 caractères, lettres, chiffres, _ ou -</small></label>
+  <label>Adresse e-mail<input type="email" name="email" maxlength="254" autocomplete="email" required><small>Votre e-mail est chiffré avant d'être stocké.</small></label>
+  <label>Mot de passe<input type="password" name="password" minlength="12" maxlength="128" autocomplete="new-password" required><small>12 à 128 caractères.</small></label>
+  <label>Confirmer le mot de passe<input type="password" name="password_confirmation" minlength="12" maxlength="128" autocomplete="new-password" required></label>
+  <button class="button button-dark button-wide" type="submit">Créer mon compte <span>↗</span></button>
+</form><p class="auth-switch">Déjà membre ? <a href="{{ url_for('auth.login') }}">Reprendre place.</a></p></div></section>
+{% endblock %}

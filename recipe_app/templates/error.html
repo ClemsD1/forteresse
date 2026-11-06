@@ -1,0 +1,3 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} — L'Atelier{% endblock %}
+{% block content %}<section class="error-page"><span class="eyebrow"><span class="eyebrow-line"></span> OUPS, UN PETIT CONTRETEMPS</span><h1>{{ title }}<span>.</span></h1><p>{{ message }}</p><a class="button button-dark" href="{{ url_for('main.index') }}">Retour à la cuisine <span>↗</span></a></section>{% endblock %}

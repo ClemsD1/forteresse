@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8f6f0">
+  <meta name="description" content="L'Atelier — recettes maison, idées de saison et cuisine à partager.">
+  <title>{% block title %}L'Atelier — la cuisine se partage{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon.svg') }}" type="image/svg+xml">
+</head>
+<body>
+  <div class="topline"><span>LES BONNES CHOSES SE CUISINENT ENSEMBLE</span><span>✳︎ &nbsp; Fait maison, toujours</span></div>
+  <header class="site-header">
+    <a class="brand" href="{{ url_for('main.index') }}" aria-label="L'Atelier, accueil">
+      <span class="brand-mark">a.</span><span class="brand-name">l'atelier<span class="brand-dot">.</span><small>CUISINE & PARTAGE</small></span>
+    </a>
+    <nav class="main-nav" aria-label="Navigation principale">
+      <a href="{{ url_for('main.index') }}">Explorer</a>
+      <a href="{{ url_for('main.tips') }}">Le carnet</a>
+      <a href="{{ url_for('main.about') }}">Notre histoire</a>
+    </nav>
+    <div class="header-actions">
+      {% if current_user.is_authenticated %}
+        <a class="nav-profile" href="{{ url_for('auth.profile') }}">
+          {% if current_user.avatar_filename %}<img class="avatar avatar-small" src="{{ url_for('auth.avatar', filename=current_user.avatar_filename) }}" alt="">{% else %}<span class="avatar avatar-small avatar-placeholder">{{ current_user.username[:1]|upper }}</span>{% endif %}
+          <span>{{ current_user.username }}</span>
+        </a>
+        {% if current_user.role == 'admin' %}<a class="admin-link" href="{{ url_for('auth.admin') }}">Admin</a>{% endif %}
+        <form action="{{ url_for('auth.logout') }}" method="post" class="inline-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="text-button" type="submit">Quitter</button></form>
+      {% else %}
+        <a class="login-link" href="{{ url_for('auth.login') }}">Connexion</a>
+        <a class="button button-dark button-small" href="{{ url_for('auth.register') }}">Rejoindre le cercle <span>↗</span></a>
+      {% endif %}
+    </div>
+  </header>
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}<div class="flash-stack" aria-live="polite">{% for category, message in messages %}<div class="flash flash-{{ category }}">{{ message }}</div>{% endfor %}</div>{% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="site-footer">
+    <div class="footer-main">
+      <div><a class="brand footer-brand" href="{{ url_for('main.index') }}"><span class="brand-mark">a.</span><span class="brand-name">l'atelier<span class="brand-dot">.</span><small>CUISINE & PARTAGE</small></span></a><p>Une table ouverte à toutes les envies.<br>Et aux recettes qui racontent quelque chose.</p></div>
+      <div class="footer-links"><span class="footer-label">À DÉCOUVRIR</span><a href="{{ url_for('main.index') }}">Les recettes</a><a href="{{ url_for('main.tips') }}">Le carnet de cuisine</a><a href="{{ url_for('main.about') }}">Notre histoire</a></div>
+      <div class="footer-links"><span class="footer-label">CÔTÉ PRATIQUE</span><a href="{{ url_for('main.tips') }}#faq">Questions fréquentes</a><a href="{{ url_for('recipes.api_recipes') }}">API recettes <span class="api-pill">JSON</span></a>{% if current_user.is_authenticated %}<a href="{{ url_for('auth.profile') }}">Mon profil</a>{% else %}<a href="{{ url_for('auth.register') }}">Créer un compte</a>{% endif %}</div>
+      <div class="footer-note"><span class="footer-spark">✳</span><p>La meilleure recette ?<br>Celle qu'on partage.</p></div>
+    </div>
+    <div class="footer-bottom"><span>© 2025 L'Atelier — La cuisine se partage.</span><span>Imaginé avec soin, cuisiné avec amour.</span></div>
+  </footer>
+</body>
+</html>

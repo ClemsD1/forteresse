@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Modifier' if recipe else 'Partager' }} une recette — L'Atelier{% endblock %}
+{% block content %}
+<section class="page-intro"><span class="eyebrow"><span class="eyebrow-line"></span> {{ 'VOTRE RECETTE, VOTRE HISTOIRE' if recipe else 'LA TABLE EST OUVERTE' }}</span><h1>{{ 'On la peaufine.' if recipe else 'À vous de<br><em>raconter.</em>' }}</h1><p>Les meilleurs plats n'ont pas besoin d'être compliqués. Juste partagés.</p></section>
+<form class="recipe-form form-stack" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>Le nom de votre recette<input name="title" minlength="3" maxlength="100" value="{{ recipe.title if recipe else '' }}" placeholder="Ex. Le gâteau aux pommes du dimanche" required></label>
+  <label>En quelques mots<textarea name="description" minlength="10" maxlength="300" rows="2" placeholder="Qu'est-ce qui rend cette recette spéciale ?" required>{{ recipe.description if recipe else '' }}</textarea><small>10 à 300 caractères.</small></label>
+  <div class="form-row"><label>Dans quelle famille ?<select name="category" required><option value="">Choisir une catégorie</option>{% for category in recipe_categories %}<option value="{{ category }}" {% if recipe and recipe.category == category %}selected{% endif %}>{{ category }}</option>{% endfor %}</select></label><div class="form-row form-row-small"><label>Préparation (min)<input type="number" name="prep_minutes" min="1" max="1440" value="{{ recipe.prep_minutes if recipe else 30 }}" required></label><label>Portions<input type="number" name="servings" min="1" max="100" value="{{ recipe.servings if recipe else 4 }}" required></label></div></div>
+  <label>Les ingrédients <span class="label-hint">Un par ligne, c'est plus simple.</span><textarea name="ingredients" minlength="5" maxlength="5000" rows="7" placeholder="2 pommes&#10;150 g de farine&#10;…" required>{{ recipe.ingredients if recipe else '' }}</textarea></label>
+  <label>Les étapes <span class="label-hint">Prenez le temps de raconter.</span><textarea name="instructions" minlength="10" maxlength="10000" rows="9" placeholder="1. Préchauffez le four…&#10;2. Dans un grand bol…" required>{{ recipe.instructions if recipe else '' }}</textarea></label>
+  <div class="form-actions"><a class="underlink" href="{{ url_for('recipes.detail', recipe_id=recipe.id) if recipe else url_for('main.index') }}">Annuler</a><button class="button button-dark" type="submit">{{ 'Enregistrer les changements' if recipe else 'Partager ma recette' }} <span>↗</span></button></div>
+</form>
+{% endblock %}

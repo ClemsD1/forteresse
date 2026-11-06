@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Notre histoire — L'Atelier{% endblock %}
+{% block content %}
+<section class="about-hero"><span class="eyebrow"><span class="eyebrow-line"></span> UNE HISTOIRE DE TABLE</span><h1>Une cuisine.<br>Des milliers de<br><em>façons de dire « viens ».</em></h1><p>L'Atelier est un endroit pour celles et ceux qui pensent que les bonnes choses gagnent à être partagées.</p><span class="about-spark">✳</span></section>
+<section class="about-story"><div class="story-mark">a.</div><div><span class="eyebrow">L'IDÉE EST TOUTE SIMPLE</span><h2>Les recettes voyagent.<br><em>Les histoires restent.</em></h2><p>On a tous cette recette qu'on nous a transmise, celle qu'on a trouvée un soir de hasard, celle qui a sauvé un dîner. L'Atelier, c'est le carnet commun où ces idées se rencontrent et se transmettent à leur tour.</p><p>Pas besoin d'être chef. Juste d'avoir envie de cuisiner, d'apprendre ou de raconter. La table est ouverte.</p><a class="underlink" href="{{ url_for('main.index') }}">Découvrir les recettes <span>↗</span></a></div></section>
+<section class="about-quote"><span>“</span><blockquote>Une recette n'appartient jamais<br>tout à fait à celui qui l'écrit.</blockquote><small>ELLE APPARTIENT À CELUI QUI LA PARTAGE.</small></section>
+{% endblock %}

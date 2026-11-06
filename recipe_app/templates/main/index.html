@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}L'Atelier — recettes maison & cuisine à partager{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="hero-copy">
+    <span class="eyebrow"><span class="eyebrow-line"></span> LE GOÛT DES CHOSES SIMPLES</span>
+    <h1>La cuisine est<br>meilleure <em>à plusieurs.</em></h1>
+    <p>Des recettes sincères, des histoires de cuisine et une grande table où tout le monde a sa place.</p>
+    <div class="hero-cta"><a class="button button-dark" href="#recettes">Trouver l'inspiration <span>↓</span></a><span class="hand-note">Par ici, les bonnes choses <span>↘</span></span></div>
+    <div class="hero-stats"><div><strong>100<span>+</span></strong><small>recettes à découvrir</small></div><i></i><div><strong>1</strong><small>grande tablée ouverte</small></div><i></i><div class="stat-stamp">FAIT<br>MAISON</div></div>
+  </div>
+  <div class="hero-art">
+    <div class="hero-photo">
+      <div class="photo-orbit orbit-one"></div><div class="photo-orbit orbit-two"></div>
+      <div class="hero-dish"><span class="dish-sprig sprig-one">✳</span><span class="dish-sprig sprig-two">✳</span><span class="dish-sprig sprig-three">✳</span><span class="dish-center">À<br>TABLE</span></div>
+      <div class="photo-caption"><span>LE PLAISIR DE FAIRE</span><span>— ET DE PARTAGER.</span></div>
+    </div>
+    <span class="hero-flower">✳</span><div class="hero-note">un peu de<br>sel, beaucoup<br><em>d'amour</em></div>
+    <div class="hero-card"><span>✳</span><div><strong>La recette du jour</strong><small>Choisie avec amour, faite pour vous.</small></div></div>
+  </div>
+</section>
+<section class="recipe-section" id="recettes">
+  <div class="section-heading">
+    <div><span class="eyebrow"><span class="eyebrow-line"></span> À PICORER SANS MODÉRATION</span><h2>Les recettes<br><em>de la maison.</em></h2></div>
+    <div class="section-aside"><p>Des petits plats du quotidien aux grandes tablées du dimanche. À vous de choisir par où commencer.</p>{% if current_user.is_authenticated %}<a class="underlink" href="{{ url_for('recipes.create') }}">Partager ma recette <span>↗</span></a>{% else %}<a class="underlink" href="{{ url_for('auth.register') }}">À vous de jouer <span>↗</span></a>{% endif %}</div>
+  </div>
+  <form class="search-panel" action="{{ url_for('main.index') }}" method="get">
+    <label class="search-box"><span class="search-icon">⌕</span><span class="visually-hidden">Rechercher une recette</span><input type="search" name="q" value="{{ search_term }}" placeholder="Un ingrédient, une envie, un souvenir…"></label>
+    <label class="select-wrap"><span class="visually-hidden">Filtrer par catégorie</span><select name="category"><option value="">Toutes les envies</option>{% for category in recipe_categories %}<option value="{{ category }}" {% if category == selected_category %}selected{% endif %}>{{ category }}</option>{% endfor %}</select><span>⌄</span></label>
+    <button class="button button-dark search-submit" type="submit">Chercher <span>↗</span></button>
+  </form>
+  <div class="recipe-results-top"><span>{% if search_term or selected_category %}{{ recipes|length }} résultat{% if recipes|length != 1 %}s{% endif %} pour votre recherche{% else %}ON SE MET À TABLE{% endif %}</span><span>LES RECETTES DE LA COMMUNAUTÉ &nbsp; ✳</span></div>
+  {% if recipes %}
+    <div class="recipe-grid">
+      {% for recipe in recipes %}
+      <article class="recipe-card">
+        <a class="recipe-card-image recipe-art-{{ loop.index0 % 4 }}" href="{{ url_for('recipes.detail', recipe_id=recipe.id) }}">
+          <span class="recipe-number">N° {{ "%02d"|format(loop.index) }}</span><span class="recipe-art-icon">{% if recipe.category == 'Dessert' %}◒{% elif recipe.category == 'Boisson' %}◉{% elif recipe.category == 'Petit-déjeuner' %}☼{% else %}✳{% endif %}</span>
+          <span class="recipe-art-label">{{ recipe.category|upper }}</span>
+          <span class="recipe-art-title">{{ recipe.title }}</span>
+        </a>
+        <div class="recipe-card-body"><div class="recipe-meta"><span>{{ recipe.prep_minutes }} MIN</span><span>·</span><span>{{ recipe.servings }} PORTIONS</span></div><h3><a href="{{ url_for('recipes.detail', recipe_id=recipe.id) }}">{{ recipe.title }}</a></h3><p>{{ recipe.description }}</p><div class="recipe-card-bottom"><span>par <strong>{{ recipe.author.username }}</strong></span><a class="circle-arrow" href="{{ url_for('recipes.detail', recipe_id=recipe.id) }}" aria-label="Voir {{ recipe.title }}">↗</a></div></div>
+      </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state"><span>✳</span><h3>La table n'attend que vous.</h3><p>{% if search_term or selected_category %}Aucune recette ne correspond à ces critères. Essayez une autre recherche.{% else %}Soyez la première personne à partager une recette avec la communauté.{% endif %}</p>{% if current_user.is_authenticated %}<a class="button button-dark" href="{{ url_for('recipes.create') }}">Partager la première recette <span>↗</span></a>{% else %}<a class="button button-dark" href="{{ url_for('auth.register') }}">Rejoindre la table <span>↗</span></a>{% endif %}</div>
+  {% endif %}
+  <div class="more-recipes"><span>✳</span> Chaque recette a une histoire. <a href="{{ url_for('main.tips') }}">La vôtre commence ici <b>↗</b></a></div>
+</section>
+<section class="invite-banner"><div class="invite-ornament">✳</div><div><span class="eyebrow">IL MANQUE QUELQUE CHOSE À LA TABLE</span><h2>Votre recette<br>pourrait être <em>la prochaine.</em></h2><p>Un plat de famille, une trouvaille du marché, un dessert improvisé : on veut tout goûter.</p><a class="button button-light" href="{{ url_for('recipes.create') if current_user.is_authenticated else url_for('auth.register') }}">À vous de cuisiner <span>↗</span></a></div><div class="banner-doodle">bon<br>appétit<span>!</span></div></section>
+{% endblock %}

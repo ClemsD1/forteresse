@@ -1,0 +1,3 @@
+{% extends "base.html" %}
+{% block title %}Accès refusé — L'Atelier{% endblock %}
+{% block content %}<section class="error-page"><span class="eyebrow"><span class="eyebrow-line"></span> CETTE PLACE EST RÉSERVÉE</span><h1>Pas votre<br><em>territoire.</em></h1><p>Cette page ou cette action n'est pas accessible avec votre compte.</p><a class="button button-dark" href="{{ url_for('main.index') }}">Retour à la cuisine <span>↗</span></a></section>{% endblock %}
