@@ -115,13 +115,27 @@ def profile():
     return render_template("auth/profile.html")
 
 
-@auth_bp.get("/avatar/<filename>")
-def avatar(filename):
+def _send_avatar(filename, *, as_attachment):
     from flask import abort, current_app, send_from_directory
 
     if not re.fullmatch(r"[a-f0-9]{32}\.webp", filename):
         abort(404)
-    return send_from_directory(current_app.config["UPLOAD_FOLDER"], filename, mimetype="image/webp")
+    return send_from_directory(
+        current_app.config["UPLOAD_FOLDER"],
+        filename,
+        mimetype="image/webp",
+        as_attachment=as_attachment,
+    )
+
+
+@auth_bp.get("/avatar/<filename>")
+def avatar(filename):
+    return _send_avatar(filename, as_attachment=False)
+
+
+@auth_bp.get("/avatar/<filename>/download")
+def download_avatar(filename):
+    return _send_avatar(filename, as_attachment=True)
 
 
 @auth_bp.get("/admin")

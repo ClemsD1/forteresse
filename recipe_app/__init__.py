@@ -23,6 +23,7 @@ def create_app(test_config=None):
     app.config.from_mapping(
         SECRET_KEY=os.environ.get("SECRET_KEY"),
         FERNET_KEY=os.environ.get("FERNET_KEY"),
+        DEBUG=False,
         SQLALCHEMY_DATABASE_URI=os.environ.get(
             "DATABASE_URL", "sqlite:///" + str(Path(app.instance_path) / "atelier.sqlite")
         ),
@@ -109,6 +110,13 @@ def create_app(test_config=None):
         return render_template(
             "error.html", title="Page introuvable", message="Cette page n'existe pas (ou plus)."
         ), 404
+
+    @app.errorhandler(500)
+    def internal_server_error(_error):
+        message = "Un problème inattendu est survenu. Veuillez réessayer plus tard."
+        if request.path.startswith("/recettes/api/"):
+            return jsonify(error="internal_server_error", message=message), 500
+        return render_template("error.html", title="Erreur interne", message=message), 500
 
     @app.cli.command("init-db")
     def init_db_command():

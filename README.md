@@ -14,7 +14,7 @@ Prérequis : Docker Desktop avec le plugin Compose.
    python -c "import base64, secrets; print(base64.urlsafe_b64encode(secrets.token_bytes(32)).decode())"
    ```
 
-3. Renseigner les résultats comme valeurs de `SECRET_KEY` et `FERNET_KEY` dans `.env`, puis définir un long `POSTGRES_PASSWORD`.
+3. Renseigner les résultats comme valeurs de `SECRET_KEY` et `FERNET_KEY` dans `.env`, puis définir deux mots de passe PostgreSQL longs et différents : `POSTGRES_PASSWORD` pour l'administrateur d'initialisation et `APP_DB_PASSWORD` pour le compte utilisé par l'application.
 
    La clé Fernet est une valeur Base64 URL-safe aléatoire de 32 octets. Sa génération avec la bibliothèque standard évite d'avoir à installer `cryptography` dans le Python global de votre ordinateur.
 4. Construire et démarrer les services :
@@ -31,6 +31,10 @@ Prérequis : Docker Desktop avec le plugin Compose.
    ```
 
 Les services utilisent un volume nommé pour la base PostgreSQL et un autre pour les avatars. Le serveur HTTP du conteneur est Waitress ; `init-db` crée les tables au démarrage. Pour un vrai produit, remplacez cette initialisation par des migrations versionnées. Derrière un reverse proxy HTTPS, configurez `COOKIE_SECURE=true` dans `.env`.
+
+Les erreurs internes renvoient un message générique aux visiteurs. Flask journalise le détail et la trace côté serveur ; le mode debug est désactivé par défaut. N'activez `--debug` que pour le développement local, jamais sur le serveur de production.
+
+Le script [db/init/001-create-app-role.sh](db/init/001-create-app-role.sh) crée au premier démarrage un rôle PostgreSQL applicatif sans droits de super-utilisateur, création de base ou création de rôle. Cette base reçoit uniquement les droits CRUD sur les tables futures et l'utilisation des séquences. La configuration Compose connecte Flask avec ce rôle via `APP_DB_USER` et `APP_DB_PASSWORD`, tandis que `POSTGRES_USER` reste réservé à l'initialisation de PostgreSQL.
 
 ## Développement local
 

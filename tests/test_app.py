@@ -109,6 +109,18 @@ class AtelierAppTests(unittest.TestCase):
         with self.app.app_context():
             self.assertEqual(User.query.count(), 0)
 
+    def test_search_payload_is_treated_as_data_not_sql(self):
+        self.register("camille", "camille@example.fr")
+        self.assertEqual(self.create_recipe("Soupe normale").status_code, 302)
+
+        response = self.client.get("/?q=' OR '1'='1")
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn(b"Soupe normale", response.data)
+
+        api_response = self.client.get("/recettes/api/recipes?q=' OR '1'='1")
+        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(api_response.get_json()["count"], 0)
+
     def test_recipe_detail_comments_and_search_pages_render(self):
         self.register("camille", "camille@example.fr")
         self.assertEqual(self.create_recipe("Velouté de carottes").status_code, 302)
@@ -126,6 +138,25 @@ class AtelierAppTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertEqual(self.client.get(path).status_code, 200)
 
+    def test_user_supplied_html_is_rendered_as_text(self):
+        self.register("camille", "camille@example.fr")
+        payload = "<img src=x onerror=alert(1)>"
+        self.assertEqual(self.create_recipe(payload).status_code, 302)
+        with self.app.app_context():
+            recipe_id = Recipe.query.one().id
+
+        comment_response = self.client.post(
+            f"/recettes/{recipe_id}/commentaires",
+            data={"body": payload},
+        )
+        response = self.client.get(f"/recettes/{recipe_id}")
+
+        self.assertEqual(comment_response.status_code, 302)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"&lt;img src=x onerror=alert(1)&gt;", response.data)
+        self.assertIn(b"<p>&lt;img src=x onerror=alert(1)&gt;</p>", response.data)
+        self.assertNotIn(payload.encode(), response.data)
+
     def test_avatar_upload_is_reencoded_and_served_as_webp(self):
         self.register("camille", "camille@example.fr")
         image_bytes = BytesIO()
@@ -140,10 +171,22 @@ class AtelierAppTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         with self.app.app_context():
             filename = User.query.one().avatar_filename
+        self.assertTrue(os.path.isfile(os.path.join(self.uploads.name, filename)))
+        self.assertNotEqual(
+            os.path.commonpath([self.app.static_folder, self.uploads.name]),
+            self.app.static_folder,
+        )
         self.assertRegex(filename, r"^[a-f0-9]{32}\.webp$")
         avatar_response = self.client.get(f"/auth/avatar/{filename}")
         self.assertEqual(avatar_response.mimetype, "image/webp")
+        self.assertNotIn("attachment", avatar_response.headers.get("Content-Disposition", ""))
+        self.assertEqual(avatar_response.headers["X-Content-Type-Options"], "nosniff")
         avatar_response.close()
+        download_response = self.client.get(f"/auth/avatar/{filename}/download")
+        self.assertEqual(download_response.mimetype, "image/webp")
+        self.assertIn("attachment", download_response.headers["Content-Disposition"])
+        self.assertEqual(download_response.headers["X-Content-Type-Options"], "nosniff")
+        download_response.close()
 
     def test_avatar_rejects_non_image_upload(self):
         self.register("camille", "camille@example.fr")
@@ -155,6 +198,42 @@ class AtelierAppTests(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         with self.app.app_context():
             self.assertIsNone(User.query.one().avatar_filename)
+
+    def test_avatar_rejects_php_and_svg_even_with_an_allowed_extension(self):
+        self.register("camille", "camille@example.fr")
+        for filename, contents in (
+            ("script.php", b"<?php echo 'not an image'; ?>"),
+            ("script.jpg", b"<?php echo 'not an image'; ?>"),
+            ("vector.svg", b'<svg xmlns="http://www.w3.org/2000/svg"></svg>'),
+        ):
+            with self.subTest(filename=filename):
+                response = self.client.post(
+                    "/auth/profil",
+                    data={"avatar": (BytesIO(contents), filename)},
+                    content_type="multipart/form-data",
+                )
+                self.assertEqual(response.status_code, 400)
+        with self.app.app_context():
+            self.assertIsNone(User.query.one().avatar_filename)
+        self.assertEqual(os.listdir(self.uploads.name), [])
+
+    def test_avatar_upload_rejects_oversized_request(self):
+        self.register("camille", "camille@example.fr")
+        boundary = b"upload-test-boundary"
+        body = (
+            b"--" + boundary + b"\r\n"
+            b'Content-Disposition: form-data; name="avatar"; filename="large.jpg"\r\n'
+            b"Content-Type: image/jpeg\r\n\r\n"
+            + b"x" * (4 * 1024 * 1024 + 1)
+            + b"\r\n--" + boundary + b"--\r\n"
+        )
+        response = self.client.post(
+            "/auth/profil",
+            data=body,
+            content_type=f"multipart/form-data; boundary={boundary.decode()}",
+        )
+        self.assertEqual(response.status_code, 413)
+        response.close()
 
     def test_csrf_is_required_when_enabled(self):
         protected_app = create_app(
@@ -169,6 +248,36 @@ class AtelierAppTests(unittest.TestCase):
         )
         response = protected_app.test_client().post("/auth/inscription", data={})
         self.assertEqual(response.status_code, 400)
+
+    def test_internal_errors_are_generic_for_users_and_logged_server_side(self):
+        self.assertFalse(self.app.debug)
+        self.app.config["PROPAGATE_EXCEPTIONS"] = False
+
+        def fail():
+            raise RuntimeError("secret diagnostic detail")
+
+        self.app.add_url_rule("/test-error", "test_error", fail)
+        self.app.add_url_rule(
+            "/recettes/api/test-error", "api_test_error", fail
+        )
+        with self.assertLogs(self.app.logger, level="ERROR") as captured:
+            html_response = self.client.get("/test-error")
+            api_response = self.client.get("/recettes/api/test-error")
+
+        self.assertEqual(html_response.status_code, 500)
+        self.assertIn(b"Erreur interne", html_response.data)
+        self.assertIn(b"Un probl\xc3\xa8me inattendu est survenu.", html_response.data)
+        self.assertNotIn(b"secret diagnostic detail", html_response.data)
+        self.assertNotIn(b"Traceback", html_response.data)
+        self.assertEqual(api_response.status_code, 500)
+        self.assertEqual(
+            api_response.get_json(),
+            {
+                "error": "internal_server_error",
+                "message": "Un problème inattendu est survenu. Veuillez réessayer plus tard.",
+            },
+        )
+        self.assertIn("secret diagnostic detail", "\n".join(captured.output))
 
 
 if __name__ == "__main__":
